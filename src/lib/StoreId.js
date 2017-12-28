@@ -5,8 +5,9 @@ export default class StoreID extends Functions{
 		super(listenersExecutedNotifier, frameListenersExecutedNotifier);
 		if(id === undefined || id === null){
 			this.id =  Math.random().toString(36).substr(2, 9);
+		} else{
+			this.id = id;
 		}
-		this.id = id;
 		this.parentId = null;
 		this.linkedIds = null;
 
