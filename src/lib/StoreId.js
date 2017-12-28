@@ -1,8 +1,8 @@
 import Functions from 'functions';
 
 export default class StoreID extends Functions{
-	constructor(id,listenersExecutedNotifier, frameListenersExecutedNotifier){
-		super(listenersExecutedNotifier, frameListenersExecutedNotifier);
+	constructor(id, listenersExecutedNotifier){
+		super(listenersExecutedNotifier);
 		if(id === undefined || id === null){
 			this.id =  Math.random().toString(36).substr(2, 9);
 		} else{
