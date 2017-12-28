@@ -1,0 +1,13 @@
+import Store from './../lib';
+
+var store = new Store(5,'Number 5');
+store.addListener(window, ()=>{
+	console.log("Immediate")
+})
+
+store.addListener(window, ()=>{
+	console.log("Later")
+}, true);
+
+store.setState(7);
+
