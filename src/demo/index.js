@@ -9,5 +9,7 @@ store.addListener(window, ()=>{
 	console.log("Later")
 }, true);
 
-store.setState(7);
+store.setState(7, ()=>{
+	console.log("Set State Callback")
+});
 

@@ -32,7 +32,7 @@ Store.prototype.getState = function(){
 	return this.value;
 };
 
-Store.prototype.setState = function(newValue, trigger = true){
+Store.prototype.setState = function(newValue, callback, trigger = true){
 
 	const _setState = ()=>{
 		const valueChange = isChanged(this.value, newValue);
@@ -44,7 +44,7 @@ Store.prototype.setState = function(newValue, trigger = true){
 	//set state function is the one which triggers all the listeners attached to it
 	// if listeners execution are going on, this will execute once they are done
 	// else set state is executed immediately
-	this.executeTriggerer(this,_setState);
+	this.executeTriggerer(this,_setState, callback);
 };
 
 
