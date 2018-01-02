@@ -70,7 +70,7 @@ Store.prototype.getDiff = function(value){
 	};
 };
 
-Store.prototype.applyDiff = function(diff){
-	this.setState(diff.value);
+Store.prototype.applyDiff = function(diff, callback){
+	this.setState(diff.value, callback);
 };
 
