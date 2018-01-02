@@ -1,6 +1,7 @@
 import Store from './../lib';
 
 const store = new Store(5,'Number');
+
 store.addListener(window, ()=>{
 	console.log("Immediate");
 });
