@@ -41,6 +41,7 @@ Store.prototype.setState = function(newValue, callback, trigger = true){
 			trigger && this.triggerListeners();
 		}
 	};
+
 	//set state function is the one which triggers all the listeners attached to it
 	// if listeners execution are going on, this will execute once they are done
 	// else set state is executed immediately
