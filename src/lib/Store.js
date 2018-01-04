@@ -55,19 +55,24 @@ Store.prototype.getDiff = function(value){
 	const prevState = this.asJson(value);
 
 	let currentState;
+	let isChanged;
 	if(comparisonValue === 0){
 		// when no change returns the ID
 		currentState = this.id;
+		isChanged = true;
+
 	} else {
 		// when there is change returns a JSOn object
 		// object which as Class Name as `store`
 		// value
 		currentState = this.asJson(currentValue);
+		isChanged = false;
 	}
 
 	return {
 		prev: prevState,
-		current: currentState
+		current: currentState,
+		diff:isChanged
 	};
 };
 
