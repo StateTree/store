@@ -12,8 +12,8 @@ function isChanged(oldVal, newVal){
 }
 
 export default class Store extends StoreID{
-	constructor( value, displayName, objectName, listenersExecutedNotifier){
-		super(objectName,listenersExecutedNotifier);
+	constructor( value, displayName, objectName){
+		super(objectName);
 		this.displayName = displayName;
 		this.value = value;
 	}
