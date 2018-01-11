@@ -37,16 +37,40 @@ Store.prototype.setState = function(newValue, callback, trigger = true){
 	const _setState = ()=>{
 		const valueChange = isChanged(this.value, newValue);
 		if (valueChange) {
-			this.value = newValue;
-			trigger && this.triggerListeners();
+			const shouldChange = this.shouldChangeValue()
+			if(shouldChange){
+				this.valueWillChange();
+				this.setValue(newValue);
+				trigger && this.triggerListeners();
+			}
 		}
 	};
 
 	//set state function is the one which triggers all the listeners attached to it
 	// if listeners execution are going on, this will execute once they are done
 	// else set state is executed immediately
-	this.executeTriggerer(this,_setState, callback);
+	this.executeTriggerer(this,_setState, ()=>{
+		this.valueDidChange();
+		callback();
+	});
 };
+
+Store.prototype.setValue = function(newValue){
+	this.value = newValue;
+};
+
+Store.prototype.valueWillChange = function(){
+
+};
+
+Store.prototype.valueDidChange = function(){
+
+};
+
+Store.prototype.shouldChangeValue = function(oldValue, newValue){
+	return true;
+};
+
 
 
 Store.prototype.getDiff = function(value){
