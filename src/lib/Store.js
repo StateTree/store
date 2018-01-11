@@ -51,7 +51,7 @@ Store.prototype.setState = function(newValue, callback, trigger = true){
 	// else set state is executed immediately
 	this.executeTriggerer(this,_setState, ()=>{
 		this.valueDidChange();
-		callback();
+		callback && callback();
 	});
 };
 
