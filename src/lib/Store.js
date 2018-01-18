@@ -33,7 +33,7 @@ Store.prototype.getState = function(){
 	return this.value;
 };
 
-Store.prototype.setState = function(newValue, callback, ){
+Store.prototype.setState = function(newValue, callback){
 
 	const _setState = ()=>{
 		const toBeOldValue = this.value;
@@ -45,7 +45,7 @@ Store.prototype.setState = function(newValue, callback, ){
 		}
 		if (didStateChanged) {
 			Store.stackDebug && console.log("Store: setState: ", toBeOldValue, newValue , this);
-			this.value = newValue;
+			this.setValue(newValue);
 			const shouldTrigger = this.shouldListenersExecute(toBeOldValue, newValue);
 			shouldTrigger && this.triggerListeners();
 		}
@@ -60,12 +60,13 @@ Store.prototype.setState = function(newValue, callback, ){
 	});
 };
 
+Store.prototype.setValue = function(newValue){
+	this.value = newValue;
+};
 
 Store.prototype.shouldListenersExecute = function(oldValue, newValue){
 	return true;
 };
-
-
 
 Store.prototype.getDiff = function(value){
 
