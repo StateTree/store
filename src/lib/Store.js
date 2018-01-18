@@ -12,10 +12,11 @@ function isChanged(oldVal, newVal){
 }
 
 export default class Store extends StoreID{
-	constructor( value, displayName, objectName){
+	constructor( value, displayName, objectName, comparer){
 		super(objectName);
 		this.displayName = displayName;
 		this.value = value;
+		this.comparer = comparer;
 	}
 
 	asJson(value){
@@ -32,17 +33,21 @@ Store.prototype.getState = function(){
 	return this.value;
 };
 
-Store.prototype.setState = function(newValue, callback, trigger = true){
+Store.prototype.setState = function(newValue, callback, ){
 
 	const _setState = ()=>{
-		const valueChange = isChanged(this.value, newValue);
-		if (valueChange) {
-			const shouldChange = this.shouldChangeValue();
-			if(shouldChange){
-				this.valueWillChange();
-				this.setValue(newValue);
-				trigger && this.triggerListeners();
-			}
+		const toBeOldValue = this.value;
+		let didStateChanged = false;
+		if(this.comparer){
+			didStateChanged = this.comparer(toBeOldValue, newValue);
+		}else{
+			didStateChanged = isChanged(toBeOldValue, newValue);
+		}
+		if (didStateChanged) {
+			Store.stackDebug && console.log("Store: setState: ", toBeOldValue, newValue , this);
+			this.value = newValue;
+			const shouldTrigger = this.shouldListenersExecute(toBeOldValue, newValue);
+			shouldTrigger && this.triggerListeners();
 		}
 	};
 
@@ -50,34 +55,24 @@ Store.prototype.setState = function(newValue, callback, trigger = true){
 	// if listeners execution are going on, this will execute once they are done
 	// else set state is executed immediately
 	this.executeTriggerer(this,_setState, ()=>{
-		this.valueDidChange();
+		Store.stackDebug && console.log("Store: _setStateCallback: " , this);
 		callback && callback();
 	});
 };
 
-Store.prototype.setValue = function(newValue){
-	this.value = newValue;
-};
 
-Store.prototype.valueWillChange = function(){
-
-};
-
-Store.prototype.valueDidChange = function(){
-
-};
-
-Store.prototype.shouldChangeValue = function(oldValue, newValue){
+Store.prototype.shouldListenersExecute = function(oldValue, newValue){
 	return true;
 };
 
 
 
 Store.prototype.getDiff = function(value){
+
 	const currentValue = this.getState();
 	const comparisonValue =  compare(value, currentValue);
 	const prevState = this.asJson(value);
-
+	Store.stackDebug && console.log("Store: getDiff: ", value, currentValue , this);
 	let currentState;
 	let isChanged;
 	if(comparisonValue === 0){
@@ -101,6 +96,9 @@ Store.prototype.getDiff = function(value){
 };
 
 Store.prototype.applyDiff = function(diff, callback){
+	Store.stackDebug && console.log("Store: applyDiff: ", diff , this);
 	this.setState(diff.value, callback);
 };
+
+Store.stackDebug = false;
 
