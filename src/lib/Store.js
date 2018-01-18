@@ -70,28 +70,28 @@ Store.prototype.shouldListenersExecute = function(oldValue, newValue){
 Store.prototype.getDiff = function(value){
 
 	const currentValue = this.getState();
-	const comparisonValue =  compare(value, currentValue);
-	const prevState = this.asJson(value);
+	let isDifferent = false;
+	if(this.comparer){
+		isDifferent = this.comparer(value, currentValue);
+	}else{
+		isDifferent = isChanged(value, currentValue);
+	}
 	Store.stackDebug && console.log("Store: getDiff: ", value, currentValue , this);
 	let currentState;
-	let isChanged;
-	if(comparisonValue === 0){
-		// when no change returns the ID
-		currentState = this.id;
-		isChanged = true;
-
-	} else {
+	if(isDifferent){
 		// when there is change returns a JSOn object
 		// object which as Class Name as `store`
 		// value
 		currentState = this.asJson(currentValue);
-		isChanged = false;
+	} else {
+		// when no change returns the ID
+		currentState = this.id;
 	}
 
+	const prevState = this.asJson(value);
 	return {
 		prev: prevState,
-		current: currentState,
-		diff:isChanged
+		current: currentState
 	};
 };
 
