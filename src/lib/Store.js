@@ -37,7 +37,7 @@ Store.prototype.setState = function(newValue, callback, trigger = true){
 	const _setState = ()=>{
 		const valueChange = isChanged(this.value, newValue);
 		if (valueChange) {
-			const shouldChange = this.shouldChangeValue()
+			const shouldChange = this.shouldChangeValue();
 			if(shouldChange){
 				this.valueWillChange();
 				this.setValue(newValue);
