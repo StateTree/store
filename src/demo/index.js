@@ -11,6 +11,6 @@ store.addListener(window, ()=>{
 }, true);
 
 store.setState(7, ()=>{
-	console.log("Set State Callback");
+	console.log("Set State Callbac k");
 });
 
