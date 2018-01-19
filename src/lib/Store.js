@@ -46,8 +46,7 @@ Store.prototype.setState = function(newValue, callback){
 		if (didStateChanged) {
 			Store.stackDebug && console.log("Store: setState: ", toBeOldValue, newValue , this);
 			this.setValue(newValue);
-			const shouldTrigger = this.shouldListenersExecute(toBeOldValue, newValue);
-			shouldTrigger && this.triggerListeners();
+			this.triggerListeners();
 		}
 	};
 
