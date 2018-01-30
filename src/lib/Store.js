@@ -15,7 +15,9 @@ export default class Store extends StoreID{
 	constructor( value, displayName, objectName, comparer){
 		super(objectName);
 		this.displayName = displayName;
-		this.value = value;
+		//initial value can't be undefined, it has to be null or given value
+		const val = value === undefined ? null : value;
+		this.setValue(val, true);
 		this.comparer = comparer;
 	}
 
@@ -30,13 +32,13 @@ export default class Store extends StoreID{
 }
 
 Store.prototype.getState = function(){
-	return this.value;
+	return this._value;
 };
 
 Store.prototype.setState = function(newValue, callback){
 
 	const _setState = ()=>{
-		const toBeOldValue = this.value;
+		const toBeOldValue = this._value;
 		let didStateChanged = false;
 		if(this.comparer){
 			didStateChanged = this.comparer(toBeOldValue, newValue);
@@ -59,8 +61,8 @@ Store.prototype.setState = function(newValue, callback){
 	});
 };
 
-Store.prototype.setValue = function(newValue){
-	this.value = newValue;
+Store.prototype.setValue = function(newValue, isInitializing = false){
+	this._value = newValue;
 };
 
 Store.prototype.shouldListenersExecute = function(oldValue, newValue){
