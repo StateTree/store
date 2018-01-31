@@ -19,15 +19,19 @@ export default class Store extends StoreID{
 		const val = value === undefined ? null : value;
 		this.setValue(val, true);
 		this.comparer = comparer;
+		this.asJson = this.asJson.bind(this);
 	}
 
 	asJson(value){
-		value = value === undefined ? this.getState() : value;
-		const json = super.asJson();
-		json['classDefName'] = 'Store';
-		json['displayName'] = this.displayName;
-		json['value'] = value;
-		return json;
+		if(value !== undefined){
+			value = value === undefined ? this.getState() : value;
+			const json = super.asJson();
+			json['classDefName'] = 'Store';
+			json['displayName'] = this.displayName;
+			json['value'] = value;
+			return json;
+		}
+
 	};
 }
 
@@ -90,7 +94,7 @@ Store.prototype.getDiff = function(value){
 		currentState = this.id;
 	}
 
-	const prevState = this.asJson(value);
+	const prevState = value !== undefined ? this.asJson(value) : undefined;
 	return {
 		prev: prevState,
 		current: currentState
