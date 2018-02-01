@@ -23,15 +23,12 @@ export default class Store extends StoreID{
 	}
 
 	asJson(value){
-		if(value !== undefined){
-			value = value === undefined ? this.getState() : value;
-			const json = super.asJson();
-			json['classDefName'] = 'Store';
-			json['displayName'] = this.displayName;
-			json['value'] = value;
-			return json;
-		}
-
+		value = value === undefined ? this.getState() : value;
+		const json = super.asJson();
+		json['classDefName'] = 'Store';
+		json['displayName'] = this.displayName;
+		json['value'] = value;
+		return json;
 	};
 }
 
