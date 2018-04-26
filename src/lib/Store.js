@@ -93,14 +93,14 @@ Store.prototype.getDiff = function(value){
 
 	const prevState = value !== undefined ? this.asJson(value) : undefined;
 	return {
-		prev: prevState,
-		current: currentState
+		previous: prevState,
+		value: currentState
 	};
 };
 
-Store.prototype.applyDiff = function(diff, callback){
-	Store.stackDebug && console.log("Store: applyDiff: ", diff , this);
-	this.setState(diff.value, callback);
+Store.prototype.applyDiff = function(stateAsJson, callback){
+	Store.stackDebug && console.log("Store: applyDiff: ", stateAsJson , this);
+	this.setState(stateAsJson.value, callback);
 };
 
 Store.stackDebug = false;
