@@ -90,7 +90,7 @@ Store.prototype.getDiff = function(value){
 	} else {
 		// when no change returns the ID
 		currentDiff = this.id;
-		prevDiff = currentValue;
+		prevDiff = this.asJson(currentValue);
 	}
 
 	return {
