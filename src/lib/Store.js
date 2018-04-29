@@ -80,21 +80,22 @@ Store.prototype.getDiff = function(value){
 		isDifferent = isChanged(value, currentValue);
 	}
 	Store.stackDebug && console.log("Store: getDiff: ", value, currentValue , this);
-	let currentState;
+	let currentDiff,prevDiff;
 	if(isDifferent){
 		// when there is change returns a JSOn object
 		// object which as Class Name as `store`
 		// value
-		currentState = this.asJson(currentValue);
+		currentDiff = this.asJson(currentValue);
+		prevDiff = undefined
 	} else {
 		// when no change returns the ID
-		currentState = this.id;
+		currentDiff = this.id;
+		prevDiff = currentValue;
 	}
 
-	const prevState = value !== undefined ? this.asJson(value) : undefined;
 	return {
-		previous: prevState,
-		value: currentState
+		previous: prevDiff,
+		value: currentDiff
 	};
 };
 
