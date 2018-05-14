@@ -1,3 +1,7 @@
 import Store from './Store';
+import StoreCollection from './StoreCollection';
 
-export default Store;
+export {
+	Store as default,
+	StoreCollection
+} ;

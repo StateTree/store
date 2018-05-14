@@ -1,8 +1,8 @@
 import Functions from 'functions';
 
 export default class StoreID extends Functions{
-	constructor(id, listenersExecutedNotifier){
-		super(listenersExecutedNotifier);
+	constructor(id){
+		super();
 		if(id === undefined || id === null){
 			this.id =  Math.random().toString(36).substr(2, 9);
 		} else{
@@ -41,11 +41,10 @@ export default class StoreID extends Functions{
 
 	};
 
+	//todo: parentId: this.parentId, linkedIds: this.linkedIds
 	asJson(){
 		return {
-			id: this.id,
-			parentId: this.parentId,
-			linkedIds: this.linkedIds
+			id: this.id
 		};
 	};
 }

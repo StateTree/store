@@ -1,4 +1,5 @@
 import Store from './../lib';
+import {StoreCollection} from './../lib';
 
 const store = new Store(5,' Number');
 

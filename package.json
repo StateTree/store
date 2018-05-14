@@ -1,6 +1,6 @@
 {
   "name": "store",
-  "version": "5.0.0",
+  "version": "6.0.0",
   "description": "Data change listener",
   "main": "lib/index.js",
   "scripts": {
@@ -43,6 +43,7 @@
   ],
   "dependencies": {
     "diff": "git+https://github.com/StateTree/diff.git",
-    "functions": "git+https://github.com/StateTree/function-collection.git"
+    "functions": "git+https://github.com/StateTree/function-collection.git",
+    "tree": "git+https://github.com/StateTree/tree.git"
   }
 }
