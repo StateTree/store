@@ -43,6 +43,7 @@
   ],
   "dependencies": {
     "diff": "git+https://github.com/StateTree/diff.git",
-    "functions": "git+https://github.com/StateTree/function-collection.git"
+    "functions": "git+https://github.com/StateTree/function-collection.git",
+    "tree": "git+https://github.com/StateTree/tree.git"
   }
 }
