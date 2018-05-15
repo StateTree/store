@@ -75,7 +75,7 @@ StoreCollection.prototype.setState = function(newValue, callback){
 			if(currentChildIds){
 				// remove all old Ids
 				currentChildIds.map((oldId)=>{
-					this.remove(oldId, false);
+					this.remove(oldId);
 				});
 			}
 			this._value = childValues;
@@ -192,20 +192,22 @@ StoreCollection.prototype.calculateDiff = function(value, onlyComparison = false
 		const childKey = childKeys[i];
 		const storeObject = this.children[childKey];
 		const newStateOfChild = stateIdMap ? stateIdMap[storeObject.id]: undefined;
-		const newValueChild = newStateOfChild ? newStateOfChild.value : undefined;
+		if(typeof newStateOfChild !== 'string'){ // if string then there is no change
+			const newValueChild = newStateOfChild ? newStateOfChild.value : undefined;
 
-		if(onlyComparison){
-			const childUpdated = storeObject.calculateDiff.call(storeObject, newValueChild, true);
-			if(childUpdated){
-				numberOfChildrenUpdated = numberOfChildrenUpdated + 1
+			if(onlyComparison){
+				const childUpdated = storeObject.calculateDiff.call(storeObject, newValueChild, true);
+				if(childUpdated){
+					numberOfChildrenUpdated = numberOfChildrenUpdated + 1
+				}
+			}else{
+				const diffValue = storeObject.getDiff.call(storeObject, newValueChild);
+				if(typeof diffValue !== 'string'){
+					didAnyChildStateChanged = true;
+				}
+				!diffStatesOfChildren && (diffStatesOfChildren = []);
+				diffStatesOfChildren.push(diffValue);
 			}
-		}else{
-			const diffValue = storeObject.getDiff.call(storeObject, newValueChild);
-			if(typeof diffValue !== 'string'){
-				didAnyChildStateChanged = true;
-			}
-			!diffStatesOfChildren && (diffStatesOfChildren = []);
-			diffStatesOfChildren.push(diffValue);
 		}
 	}
 
