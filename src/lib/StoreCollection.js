@@ -193,7 +193,7 @@ StoreCollection.prototype.calculateDiff = function(value, onlyComparison = false
 				numberOfChildrenUpdated = numberOfChildrenUpdated + 1
 			}
 		}else{
-			const diffValue = storeObject.getDiff.call(storeObject, valueOfChild);
+			const diffValue = storeObject.getDiff.call(storeObject, newValueChild);
 			if(typeof diffValue !== 'string'){
 				didAnyChildStateChanged = true;
 			}
