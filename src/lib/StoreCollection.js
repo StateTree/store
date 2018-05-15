@@ -46,14 +46,7 @@ export default class StoreCollection extends Store{
 }
 
 StoreCollection.prototype.getState = function(){
-	const childrenAsJson = [];
-	const childKeys = Object.keys(this.children);
-	for(let i = 0; i < childKeys.length; i++){
-		const childKey = childKeys[i];
-		const storeObject = this.children[childKey];
-		childrenAsJson.push(storeObject.asJson());
-	}
-	return childrenAsJson;
+	return this.getChildren(true);
 };
 
 StoreCollection.prototype.setState = function(newValue){
@@ -89,7 +82,7 @@ StoreCollection.prototype.setState = function(newValue){
 		});
 	}
 
-	this.setValue(childValues);
+	this._value = childValues;
 	this.triggerWaitCount = numberOfChildUpdated;
 	return Number(numberOfChildUpdated > 0);
 };
@@ -110,7 +103,6 @@ StoreCollection.prototype.getChildren = function(asJson){
 	}
 	return children;
 };
-
 
 
 //to-do think of ui point of view and the change the way they are instantiated here
