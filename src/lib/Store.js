@@ -55,6 +55,9 @@ export default class Store extends StoreID{
 }
 
 
+Store.prototype.getValue = function(){
+	return this._value;
+};
 
 Store.prototype.getState = function(){
 	return this._value;
