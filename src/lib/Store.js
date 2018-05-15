@@ -30,7 +30,6 @@ function calculateDiff(value, onlyComparison = false){
 
 /*
 * 1. getValue, return the wrapped value inside this object
-* 2. setValue sets the value(probably shouldn't be exposed)
 * 3. getState does exactly what getValue does (duplication)
 * 4. setState set the value if there is a change to oldValue and inAddition triggers all dataChange listeners
 * 5. getDiff return the value in JSON Strucuture with metadata Information about this object*/
@@ -56,9 +55,6 @@ export default class Store extends StoreID{
 	};
 }
 
-Store.prototype.setValue = function(newValue){
-	this._value = newValue;
-};
 
 
 Store.prototype.getState = function(){
@@ -68,7 +64,7 @@ Store.prototype.getState = function(){
 Store.prototype.setState = function(newValue, callback){
 	const didStateChanged = calculateDiff.call(this,newValue, true);
 	const _setState = ()=>{
-		this.setValue(newValue);
+		this._value = newValue;
 		this.triggerListeners();
 	};
 
