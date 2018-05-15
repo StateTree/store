@@ -28,7 +28,7 @@ export default class StoreCollection extends Store{
 		this.children = {};
 		let value;
 		if(state){
-			value = state.value === undefined ? null : state.value
+			value = state.value === undefined ? {} : state.value
 		}
 		value && (this._value = value);
 		this.triggerWaitCount = 0;
@@ -121,6 +121,7 @@ StoreCollection.prototype.requestStore = function(id, state, classDefName, displ
 	storeObject.setConnector(this.triggerListeners.bind(this));
 	storeObject.linkParentId(this.id);
 	this.children[storeObject.id] = storeObject;
+	this._value[storeObject.id] = storeObject.getValue();
 
 
 	this.triggerListeners();
@@ -130,6 +131,8 @@ StoreCollection.prototype.requestStore = function(id, state, classDefName, displ
 StoreCollection.prototype.remove = function(id,trigger = true){
 	const storeObject = this.children[id];
 	storeObject.removeConnector();
+	delete this.children[id];
+	delete this._value[id];
 	trigger && this.triggerListeners();
 };
 
