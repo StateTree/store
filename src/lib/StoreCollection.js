@@ -107,7 +107,7 @@ StoreCollection.prototype.getChildren = function(asJson){
 
 //to-do think of ui point of view and the change the way they are instantiated here
 StoreCollection.prototype.requestStore = function(id, state, classDefName, displayName){
-	let storeObject = this.children(id);
+	let storeObject = this.children[id];
 	if(storeObject){
 		return storeObject.setState(state);
 	}
