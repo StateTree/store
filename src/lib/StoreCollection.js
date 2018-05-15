@@ -29,10 +29,12 @@ export default class StoreCollection extends Store{
 	}
 
 	shouldListenersExecute(){
-		if(this.triggerWaitCount === 0){
+		if(this.triggerWaitCount === 0 || this.triggerWaitCount === 1){
+			this.triggerWaitCount === 1 && this.triggerWaitCount--;
 			return true;
 		} else {
 			this.triggerWaitCount = this.triggerWaitCount - 1
+			return false;
 		}
 
 	}
