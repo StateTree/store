@@ -26,11 +26,7 @@ export default class StoreCollection extends Store{
 	constructor(state,displayName, objectName){
 		super(null, displayName, objectName);
 		this.children = {};
-		let value;
-		if(state){
-			value = state.value === undefined ? {} : state.value
-		}
-		value && (this._value = value);
+		this._value = state ? (state.value === undefined ? {} : state.value) : {};
 		this.triggerWaitCount = 0;
 	}
 
