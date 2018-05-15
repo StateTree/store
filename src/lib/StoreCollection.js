@@ -179,8 +179,13 @@ StoreCollection.prototype.calculateDiff = function(value, onlyComparison = false
 	const stateLength = value ? value.length : NaN;
 	const currentStateLength = childKeys ? childKeys.length : 0;
 	let didAnyChildStateChanged = stateLength !== currentStateLength ;
+
+
 	let numberOfChildrenUpdated = 0;
-	let numberOfAdditionDeletionUpdates = Math.abs(stateLength - currentStateLength);
+	const delta = stateLength - currentStateLength;
+	//since we are running for loop based on current state length , deletion will be identified
+	// hence we have to take addition into consideration.
+	let numberOfChildAddition = delta > 0 ? delta : 0;
 
 	let diffStatesOfChildren = undefined;
 	for(let i = 0; i < currentStateLength; i++){
@@ -190,8 +195,8 @@ StoreCollection.prototype.calculateDiff = function(value, onlyComparison = false
 		const newValueChild = newStateOfChild ? newStateOfChild.value : undefined;
 
 		if(onlyComparison){
-			didAnyChildStateChanged = storeObject.calculateDiff.call(storeObject, newValueChild, true);
-			if(didAnyChildStateChanged){
+			const childUpdated = storeObject.calculateDiff.call(storeObject, newValueChild, true);
+			if(childUpdated){
 				numberOfChildrenUpdated = numberOfChildrenUpdated + 1
 			}
 		}else{
@@ -199,14 +204,13 @@ StoreCollection.prototype.calculateDiff = function(value, onlyComparison = false
 			if(typeof diffValue !== 'string'){
 				didAnyChildStateChanged = true;
 			}
-			!diffStatesOfChildren && (diffStatesOfChildren = [])
+			!diffStatesOfChildren && (diffStatesOfChildren = []);
 			diffStatesOfChildren.push(diffValue);
 		}
-
 	}
 
 	if(onlyComparison){
-		return numberOfAdditionDeletionUpdates + numberOfChildrenUpdated;
+		return numberOfChildAddition + numberOfChildrenUpdated;
 	}
 
 	const diffState = didAnyChildStateChanged ? this.asJson(diffStatesOfChildren) : this.id;
