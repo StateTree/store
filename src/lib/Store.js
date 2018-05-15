@@ -1,15 +1,5 @@
-import { compare} from 'diff';
+import { isChanged} from './helpers';
 import StoreID from './StoreID';
-
-
-function isChanged(oldVal, newVal){
-	const comparisonValue =  compare(oldVal, newVal);
-	if(comparisonValue === 0) {
-		return false;
-	} else {
-		return true;
-	}
-}
 
 function calculateDiff(value, onlyComparison = false){
 	const currentValue = this._value;
@@ -64,13 +54,13 @@ Store.prototype.getState = function(){
 };
 
 Store.prototype.setState = function(newValue, callback){
-	const didStateChanged = calculateDiff.call(this,newValue, true);
-	const _setState = ()=>{
-		this._value = newValue;
-		this.triggerListeners();
-	};
+	const didStateChanged = this.calculateDiff(newValue, true);
 
 	if(didStateChanged){
+		const _setState = ()=>{
+			this._value = newValue;
+			this.triggerListeners();
+		};
 		//set state function is the one which triggers all the listeners attached to it
 		// if listeners execution are going on, this will execute once they are done
 		// else set state is executed immediately
@@ -87,9 +77,25 @@ Store.prototype.shouldListenersExecute = function(oldValue, newValue){
 	return true;
 };
 
+Store.prototype.calculateDiff = function (value, onlyComparison = false){
+	const currentValue = this._value;
+	let changed = false;
+	if(this.comparer){
+		changed = this.comparer(value, currentValue);
+	}else{
+		changed = isChanged(value, currentValue);
+	}
+	Store.stackDebug && console.log("Store: getDiff: ", value, currentValue , this);
+	if(onlyComparison){
+		return changed;
+	}
+
+	return changed ? this.asJson(currentValue) : this.id;
+}
+
 // Diff returns the Diff Value as JSON
 Store.prototype.getDiff = function(value){
-	return calculateDiff.call(this,value)
+	return this.calculateDiff(value)
 };
 
 Store.prototype.applyDiff = function(stateAsJson, callback){
