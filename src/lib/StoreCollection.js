@@ -20,8 +20,6 @@ function arrayToObjectOfChildIds(childPrevStates){
 	return prevStateIdMap;
 }
 
-
-
 export default class StoreCollection extends Store{
 	constructor(state,displayName, objectName){
 		super(null, displayName, objectName);
@@ -34,7 +32,7 @@ export default class StoreCollection extends Store{
 		if(this.triggerWaitCount === 0){
 			return true;
 		} else {
-			this.triggerWaitCount--
+			this.triggerWaitCount = this.triggerWaitCount - 1
 		}
 
 	}
@@ -45,42 +43,50 @@ StoreCollection.prototype.getState = function(){
 	return this.getChildren(true);
 };
 
-StoreCollection.prototype.setState = function(newValue){
-	let childValues = {};
-	const currentChildIds = this.getChildIds(true);
-	let numberOfChildUpdated = 0;
-	if(newValue){
-		for (let i = 0; i < newValue.length; i++) {
-			const newChildState = newValue[i];
-			if(newChildState){
-				let childId;
-				if(typeof newChildState === 'string'){
-					childId = newChildState; // id of UnchangedChild
-					childValues[childId] = this._value[childId];
-				} else {
-					const{id, classDefName, value, displayName} = newChildState;
-					childId = id; // id of changedChild
-					const objOrBooleanAsNum = this.requestStore(childId, value, classDefName, displayName);
-					numberOfChildUpdated = numberOfChildUpdated + Number(typeof objOrBooleanAsNum === "object" || objOrBooleanAsNum);
-					childValues[id] = value;
-				}
-				const idStillExist = (currentChildIds && currentChildIds.indexOf(childId) > -1)
-				if(idStillExist){ // remove them
-					currentChildIds.splice(childId,1);
+StoreCollection.prototype.setState = function(newValue, callback){
+	this.triggerWaitCount = this.calculateDiff(newValue, true);
+	if(this.triggerWaitCount > 0){
+		const _setState = ()=>{
+			let childValues = {};
+			const currentChildIds = this.getChildIds(true);
+			if(newValue){
+				for (let i = 0; i < newValue.length; i++) {
+					const newChildState = newValue[i];
+					if(newChildState){
+						let childId;
+						if(typeof newChildState === 'string'){
+							childId = newChildState; // id of UnchangedChild
+							childValues[childId] = this._value[childId];
+						} else {
+							const{id, classDefName, value, displayName} = newChildState;
+							childId = id; // id of changedChild
+							this.requestStore(childId, value, classDefName, displayName);
+							childValues[id] = value;
+						}
+						const idStillExist = (currentChildIds && currentChildIds.indexOf(childId) > -1)
+						if(idStillExist){ // remove them
+							currentChildIds.splice(childId,1);
+						}
+					}
 				}
 			}
-		}
-	}
-	if(currentChildIds){
-		// remove all old Ids
-		currentChildIds.map((oldId)=>{
-			this.remove(oldId, false);
+			if(currentChildIds){
+				// remove all old Ids
+				currentChildIds.map((oldId)=>{
+					this.remove(oldId, false);
+				});
+			}
+			this._value = childValues;
+		};
+		//set state function is the one which triggers all the listeners attached to it
+		// if listeners execution are going on, this will execute once they are done
+		// else set state is executed immediately
+		this.executeTriggerer(this,_setState, ()=>{
+			callback && callback();
 		});
 	}
 
-	this._value = childValues;
-	this.triggerWaitCount = numberOfChildUpdated;
-	return Number(numberOfChildUpdated > 0);
+	return Number(this.triggerWaitCount > 0);
 };
 
 
@@ -102,43 +108,108 @@ StoreCollection.prototype.getChildren = function(asJson){
 
 
 //to-do think of ui point of view and the change the way they are instantiated here
-StoreCollection.prototype.requestStore = function(id, state, classDefName, displayName){
+StoreCollection.prototype.requestStore = function(id, state, classDefName, displayName, newStoreCallback){
 	let storeObject = this.children[id];
 	if(storeObject){
 		return storeObject.setState(state);
 	}
 
-	if(classDefName === 'Store'){
-		storeObject = new Store(state, displayName, id);
-	} else if(classDefName === 'StoreCollection') {
-		storeObject = new StoreCollection(state, displayName, id);
-	}
+	let returnValue;
+	const _requestStore = ()=>{
+		if(classDefName === 'Store'){
+			storeObject = new Store(state, displayName, id);
+		} else if(classDefName === 'StoreCollection') {
+			storeObject = new StoreCollection(state, displayName, id);
+		}
 
-	storeObject.setConnector(this.triggerListeners.bind(this));
-	storeObject.linkParentId(this.id);
-	this.children[storeObject.id] = storeObject;
-	this._value[storeObject.id] = storeObject.getValue();
+		storeObject.setConnector(this.triggerListeners.bind(this));
+		storeObject.linkParentId(this.id);
+		const newStoreObjId = storeObject.id;
+		this.children[newStoreObjId] = storeObject;
+		this._value[newStoreObjId] = storeObject.getValue();
+		returnValue = storeObject;
+		this.triggerListeners();
+	};
 
-
-	this.triggerListeners();
-	return storeObject;
+	this.executeTriggerer(this,_requestStore, ()=>{
+		newStoreCallback && newStoreCallback(returnValue);
+	});
 };
 
 StoreCollection.prototype.remove = function(id,trigger = true){
 	const storeObject = this.children[id];
-	storeObject.removeConnector();
-	delete this.children[id];
-	delete this._value[id];
-	trigger && this.triggerListeners();
+	if(storeObject){
+		const _remove = ()=>{
+			storeObject.removeConnector();
+			delete this.children[id];
+			delete this._value[id];
+			trigger && this.triggerListeners();
+		}
+
+		if(!trigger){
+			_remove.call(this);
+		};
+
+		this.executeTriggerer(this,_remove)
+	}
+
 };
 
 StoreCollection.prototype.removeAll = function(){
 	const childKeys = Object.keys(this.children);
-	for(let i = 0; i < childKeys.length; i++){
-		const childKey = childKeys[i];
-		this.remove(childKey, false);
+	if(childKeys.length > 0){
+		const _removeAll = ()=>{
+			for(let i = 0; i < childKeys.length; i++){
+				const childKey = childKeys[i];
+				this.remove(childKey, false);
+			}
+			this.triggerListeners();
+		}
+
+		this.executeTriggerer(this,_removeAll)
 	}
-	childKeys.length > 0 && this.triggerListeners();
+};
+
+StoreCollection.prototype.calculateDiff = function(value, onlyComparison = false){
+	const stateIdMap = arrayToObjectOfChildIds(value);
+
+	const childKeys = Object.keys(this.children);
+	const stateLength = value ? value.length : NaN;
+	const currentStateLength = childKeys ? childKeys.length : 0;
+	let didAnyChildStateChanged = stateLength !== currentStateLength ;
+	let numberOfChildrenUpdated = 0;
+	let numberOfAdditionDeletionUpdates = Math.abs(stateLength - currentStateLength);
+
+	let diffStatesOfChildren = undefined;
+	for(let i = 0; i < currentStateLength; i++){
+		const childKey = childKeys[i];
+		const storeObject = this.children[childKey];
+		const newStateOfChild = stateIdMap ? stateIdMap[storeObject.id]: undefined;
+		const newValueChild = newStateOfChild ? newStateOfChild.value : undefined;
+
+		if(onlyComparison){
+			didAnyChildStateChanged = storeObject.calculateDiff.call(storeObject, newValueChild, true);
+			if(didAnyChildStateChanged){
+				numberOfChildrenUpdated = numberOfChildrenUpdated + 1
+			}
+		}else{
+			const diffValue = storeObject.getDiff.call(storeObject, valueOfChild);
+			if(typeof diffValue !== 'string'){
+				didAnyChildStateChanged = true;
+			}
+			!diffStatesOfChildren && (diffStatesOfChildren = [])
+			diffStatesOfChildren.push(diffValue);
+		}
+
+	}
+
+	if(onlyComparison){
+		return numberOfAdditionDeletionUpdates + numberOfChildrenUpdated;
+	}
+
+	const diffState = didAnyChildStateChanged ? this.asJson(diffStatesOfChildren) : this.id;
+
+	return diffState;
 };
 
 // when we call apply diff, connect to next set of functions are not called
@@ -151,29 +222,5 @@ StoreCollection.prototype.applyDiff = function(value, callback){
 };
 
 StoreCollection.prototype.getDiff = function(value){
-	const stateIdMap = arrayToObjectOfChildIds(value);
-
-	const childKeys = Object.keys(this.children);
-	const stateLength = value ? value.length : NaN;
-	const currentStateLength = childKeys ? childKeys.length : 0;
-	let didAnyChildStateChanged = stateLength !== currentStateLength ;
-
-	let diffStatesOfChildren = undefined;
-	for(let i = 0; i < currentStateLength; i++){
-		const childKey = childKeys[i];
-		const storeObject = this.children[childKey];
-		const childState = stateIdMap ? stateIdMap[storeObject.id]: undefined;
-		const valueOfChild = childState ? childState.value : undefined;
-
-		const diffValue = storeObject.getDiff.call(storeObject, valueOfChild);
-		if(typeof diffValue !== 'string'){
-			didAnyChildStateChanged = true;
-		}
-		!diffStatesOfChildren && (diffStatesOfChildren = [])
-		diffStatesOfChildren.push(diffValue);
-	}
-
-	const diffState = didAnyChildStateChanged ? this.asJson(diffStatesOfChildren) : this.id;
-
-	return diffState;
+	return this.calculateDiff(value)
 };
