@@ -36,7 +36,6 @@ function calculateDiff(value, onlyComparison = false){
 export default class Store extends StoreID{
 	constructor(value, displayName, objectName, comparer){
 		super(objectName);
-		this.diff = calculateDiff(value);
 		//initial value can't be undefined, it has to be null or given value
 		this._value = value === undefined ? null : value;
 		this.displayName = displayName;
