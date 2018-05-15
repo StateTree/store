@@ -30,7 +30,7 @@ export default class StoreCollection extends Store{
 		if(state){
 			value = state.value === undefined ? null : state.value
 		}
-		value && this.setValue(value)
+		value && (this._value = value);
 		this.triggerWaitCount = 0;
 	}
 
