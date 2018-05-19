@@ -215,9 +215,17 @@ StoreCollection.prototype.calculateDiff = function(value, onlyComparison = false
 		return numberOfChildAddition + numberOfChildrenUpdated;
 	}
 
-	const diffState = didAnyChildStateChanged ? this.asJson(diffStatesOfChildren) : this.id;
-
-	return diffState;
+	if(didAnyChildStateChanged){
+		return {
+			forward:this.asJson(diffStatesOfChildren),
+			backward:this.asJson(value)
+		}
+	} else {
+		return {
+			forward:this.id,
+			backward:this.id
+		}
+	}
 };
 
 // when we call apply diff, connect to next set of functions are not called
