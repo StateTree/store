@@ -176,7 +176,7 @@ StoreCollection.prototype.calculateDiff = function(value, onlyComparison = false
 	const stateIdMap = arrayToObjectOfChildIds(value);
 
 	const childKeys = Object.keys(this.children);
-	const stateLength = value ? value.length : NaN;
+	const stateLength = value ? value.length : 0;
 	const currentStateLength = childKeys ? childKeys.length : 0;
 	let didAnyChildStateChanged = stateLength !== currentStateLength ;
 
