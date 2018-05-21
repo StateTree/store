@@ -1,6 +1,6 @@
 {
   "name": "store",
-  "version": "6.3.1",
+  "version": "6.3.3",
   "description": "Data change listener",
   "main": "lib/index.js",
   "scripts": {
