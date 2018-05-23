@@ -172,7 +172,7 @@ StoreCollection.prototype.removeAll = function(){
 	}
 };
 
-StoreCollection.prototype.calculateDiff = function(value, onlyComparison = false){
+StoreCollection.prototype.calculateDiff = function(value, onlyComparison = false, asforwardBackward = false){
 	const stateIdMap = arrayToObjectOfChildIds(value);
 
 	const childKeys = Object.keys(this.children);
@@ -216,15 +216,15 @@ StoreCollection.prototype.calculateDiff = function(value, onlyComparison = false
 	}
 
 	if(didAnyChildStateChanged){
-		return {
+		return asforwardBackward ? {
 			forward:this.asJson(diffStatesOfChildren),
 			backward:this.asJson(value)
-		}
+		} : this.asJson(diffStatesOfChildren)
 	} else {
-		return {
+		return asforwardBackward ? {
 			forward:this.id,
 			backward:this.id
-		}
+		} : this.asJson(diffStatesOfChildren)
 	}
 };
 
@@ -235,8 +235,4 @@ StoreCollection.prototype.applyDiff = function(value, callback){
 		this.linkConnector();
 		callback()
 	});
-};
-
-StoreCollection.prototype.getDiff = function(value){
-	return this.calculateDiff(value)
 };
