@@ -224,7 +224,7 @@ StoreCollection.prototype.calculateDiff = function(value, onlyComparison = false
 		return asforwardBackward ? {
 			forward:this.id,
 			backward:this.id
-		} : this.asJson(diffStatesOfChildren)
+		} : this.id;
 	}
 };
 
