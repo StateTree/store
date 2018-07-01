@@ -34,12 +34,12 @@ export default class Store extends StoreID{
 		this.asJson = this.asJson.bind(this);
 	}
 
-	asJson(value){
+	asJson(value, isDelete){
 		value = value === undefined ? this.getState() : value;
 		const json = super.asJson();
-		json['classDefName'] = this.constructor.name;
-		json['displayName'] = this.displayName;
-		json['value'] = value;
+		json['classDefName'] = isDelete ?  undefined : this.constructor.name;
+		json['displayName'] = isDelete ?  undefined :this.displayName;
+		json['value'] = isDelete ?  undefined :value;
 		return json;
 	};
 }
@@ -80,16 +80,13 @@ Store.prototype.shouldListenersExecute = function(oldValue, newValue){
 // need both forward diff and  backward diff
 Store.prototype.calculateDiff = function (value, onlyComparison = false, asforwardBackward = false){
 	const currentValue = this._value;
-	let changed = false;
-	if(this.comparer){
-		changed = this.comparer(value, currentValue);
-	}else{
-		changed = isChanged(value, currentValue);
-	}
-	Store.stackDebug && console.log("Store: getDiff: ", value, currentValue , this);
+	const compareFn = this.comparer ? this.comparer : isChanged;
+	const changed = compareFn(value, currentValue);
+
 	if(onlyComparison){
 		return changed;
 	}
+
 	if(changed){
 		return asforwardBackward ? {
 			forward:this.asJson(currentValue),
