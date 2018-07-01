@@ -1,24 +1,5 @@
 import Store from './Store';
-
-function arrayToObjectOfChildIds(childPrevStates){
-	let prevStateIdMap = null;
-	if(childPrevStates){
-		prevStateIdMap = {};
-		let i, id, childPrevState;
-		for(i = 0; i < childPrevStates.length; i++){
-			childPrevState = childPrevStates[i];
-			if(childPrevState){
-				if(typeof childPrevState === 'string'){
-					id = childPrevState;
-				} else {
-					id = childPrevState['id'];
-				}
-				prevStateIdMap[id] = childPrevState;
-			}
-		}
-	}
-	return prevStateIdMap;
-}
+import {arrayToObject, combineArray} from './helpers';
 
 export default class StoreCollection extends Store{
 	constructor(state,displayName, objectName){
@@ -33,7 +14,7 @@ export default class StoreCollection extends Store{
 			this.triggerWaitCount === 1 && this.triggerWaitCount--;
 			return true;
 		} else {
-			this.triggerWaitCount = this.triggerWaitCount - 1
+			this.triggerWaitCount = this.triggerWaitCount - 1;
 			return false;
 		}
 
@@ -173,53 +154,86 @@ StoreCollection.prototype.removeAll = function(){
 };
 
 StoreCollection.prototype.calculateDiff = function(value, onlyComparison = false, asforwardBackward = false){
-	const stateIdMap = arrayToObjectOfChildIds(value);
+	const valueAsObj = arrayToObject(value, 'id');
 
-	const childKeys = Object.keys(this.children);
-	const stateLength = value ? value.length : NaN;
-	const currentStateLength = childKeys ? childKeys.length : 0;
-	let didAnyChildStateChanged = stateLength !== currentStateLength ;
+	const childrenKeys = Object.keys(this.children);
+	const stateLen = value ? value.length : NaN;
+	const currentStateLen = childrenKeys ? childrenKeys.length : 0;
+	let isChanged = stateLen !== currentStateLen ;
+	let childUpdateCount = 0;
 
+	let childrenForwardDiffs = undefined;
+	let childrenBackwardDiffs = undefined;
 
-	let numberOfChildrenUpdated = 0;
-	const delta = stateLength - currentStateLength;
-	//since we are running for loop based on current state length , deletion will be identified
-	// hence we have to take addition into consideration.
-	let numberOfChildAddition = delta > 0 ? delta : 0;
+	for(let i = 0; i < currentStateLen; i++){
+		const key = childrenKeys[i];
+		const currentStoreObject = this.children[key];
+		const childState = valueAsObj ? valueAsObj[currentStoreObject.id]: undefined;
 
-	let diffStatesOfChildren = undefined;
-	for(let i = 0; i < currentStateLength; i++){
-		const childKey = childKeys[i];
-		const storeObject = this.children[childKey];
-		const newStateOfChild = stateIdMap ? stateIdMap[storeObject.id]: undefined;
-		if(typeof newStateOfChild !== 'string'){ // if string then there is no change
-			const newValueChild = newStateOfChild ? newStateOfChild.value : undefined;
+		if(childState ){ // excisting child update
+			delete valueAsObj[currentStoreObject.id]; // need to do this to identify all deleted child
+			const childValue = childState ? childState.value : undefined;
 
 			if(onlyComparison){
-				const childUpdated = storeObject.calculateDiff.call(storeObject, newValueChild, true);
-				if(childUpdated){
-					numberOfChildrenUpdated = numberOfChildrenUpdated + 1
+				const isChildUpdated = currentStoreObject.calculateDiff.call(currentStoreObject, childValue, true);
+				if(isChildUpdated){
+					childUpdateCount = childUpdateCount + 1
 				}
 			}else{
-				const diffValue = storeObject.getDiff.call(storeObject, newValueChild);
+				const diffValue = currentStoreObject.getDiff.call(currentStoreObject, childValue);
 				if(typeof diffValue !== 'string'){
-					didAnyChildStateChanged = true;
+					isChanged = true;
 				}
-				!diffStatesOfChildren && (diffStatesOfChildren = []);
-				diffStatesOfChildren.push(diffValue);
+				!childrenForwardDiffs && (childrenForwardDiffs = []);
+				childrenForwardDiffs.push(diffValue);
 			}
+		}
+		else {// new child addition
+			if(onlyComparison){
+				childUpdateCount = childUpdateCount + 1;
+			} else {
+				!childrenForwardDiffs && (childrenForwardDiffs = []);
+				childrenForwardDiffs.push(currentStoreObject.asJson());
+
+				!childrenBackwardDiffs && (childrenBackwardDiffs = []);
+				childrenBackwardDiffs.push(currentStoreObject.asJson(undefined, true))
+			}
+
 		}
 	}
 
-	if(onlyComparison){
-		return numberOfChildAddition + numberOfChildrenUpdated;
+	const deletedChildKeys = Object.keys(valueAsObj);
+	const deletedChildCount = deletedChildKeys ? deletedChildKeys.length : 0;
+	if(deletedChildCount){
+		if(onlyComparison){
+			return deletedChildCount + childUpdateCount;
+		} else {
+			for(let i = 0; i < deletedChildCount; i++){
+				const deletedChildKey = deletedChildKeys[i];
+				const deletedChild = valueAsObj[deletedChildKey];
+				const deletedChildForwardDiff = {};
+				deletedChildForwardDiff.id = deletedChild.id;
+				deletedChildForwardDiff['classDefName'] = undefined;
+				deletedChildForwardDiff['displayName'] = undefined;
+				deletedChildForwardDiff['value'] = undefined;
+
+
+				!childrenForwardDiffs && (childrenForwardDiffs = []);
+				childrenForwardDiffs.push(deletedChildForwardDiff);
+
+				!childrenBackwardDiffs && (childrenBackwardDiffs = []);
+				childrenBackwardDiffs.push(deletedChild)
+			}
+		}
+
 	}
 
-	if(didAnyChildStateChanged){
+
+	if(isChanged){
 		return asforwardBackward ? {
-			forward:this.asJson(diffStatesOfChildren),
+			forward:this.asJson(childrenForwardDiffs),
 			backward:this.asJson(value)
-		} : this.asJson(diffStatesOfChildren)
+		} : this.asJson(childrenForwardDiffs)
 	} else {
 		return asforwardBackward ? {
 			forward:this.id,
@@ -228,6 +242,14 @@ StoreCollection.prototype.calculateDiff = function(value, onlyComparison = false
 	}
 };
 
+StoreCollection.prototype.combineDiff = function(array1, array2, idName){
+
+	return combineArray(array1, array2, idName, (array1AsObj, array2Child, keyName)=>{
+		const childId = typeof array2Child === 'string' ? array2Child : array2Child[keyName];
+		return !array1AsObj[childId];
+	})
+
+}
 // when we call apply diff, connect to next set of functions are not called
 StoreCollection.prototype.applyDiff = function(value, callback){
 	this.unLinkConnector();
