@@ -78,7 +78,7 @@ Store.prototype.shouldListenersExecute = function(oldValue, newValue){
 };
 
 // need both forward diff and  backward diff
-Store.prototype.calculateDiff = function (value, onlyComparison = false, asforwardBackward = false){
+Store.prototype.calculateDiff = function (value, onlyComparison = false){
 	const currentValue = this._value;
 	const compareFn = this.comparer ? this.comparer : isChanged;
 	const changed = compareFn(value, currentValue);
@@ -88,21 +88,21 @@ Store.prototype.calculateDiff = function (value, onlyComparison = false, asforwa
 	}
 
 	if(changed){
-		return asforwardBackward ? {
+		return {
 			forward:this.asJson(currentValue),
 			backward:this.asJson(value)
-		} : this.asJson(currentValue);
+		};
 	} else {
-		return asforwardBackward ? {
+		return {
 			forward:this.id,
 			backward:this.id
-		} : this.id
+		};
 	}
 }
 
 // Diff returns the Diff Value as JSON
-Store.prototype.getDiff = function(value, asforwardBackward = false){
-	return this.calculateDiff(value, false, asforwardBackward)
+Store.prototype.getDiff = function(value){
+	return this.calculateDiff(value, false)
 };
 
 Store.prototype.applyDiff = function(stateAsJson, callback){

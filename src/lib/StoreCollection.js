@@ -153,7 +153,7 @@ StoreCollection.prototype.removeAll = function(){
 	}
 };
 
-StoreCollection.prototype.calculateDiff = function(value, onlyComparison = false, asforwardBackward = false){
+StoreCollection.prototype.calculateDiff = function(value, onlyComparison = false){
 	const valueAsObj = arrayToObject(value, 'id');
 
 	const childrenKeys = Object.keys(this.children);
@@ -162,8 +162,8 @@ StoreCollection.prototype.calculateDiff = function(value, onlyComparison = false
 	let isChanged = stateLen !== currentStateLen ;
 	let childUpdateCount = 0;
 
-	let childrenForwardDiffs = undefined;
-	let childrenBackwardDiffs = undefined;
+	let childrenForwardDiffs = [];
+	let childrenBackwardDiffs = [];
 
 	for(let i = 0; i < currentStateLen; i++){
 		const key = childrenKeys[i];
@@ -175,7 +175,7 @@ StoreCollection.prototype.calculateDiff = function(value, onlyComparison = false
 			const childValue = childState ? childState.value : undefined;
 
 			if(onlyComparison){
-				const isChildUpdated = currentStoreObject.calculateDiff.call(currentStoreObject, childValue, true);
+				const isChildUpdated = currentStoreObject.calculateDiff.call(currentStoreObject, childValue, onlyComparison);
 				if(isChildUpdated){
 					childUpdateCount = childUpdateCount + 1
 				}
@@ -184,25 +184,24 @@ StoreCollection.prototype.calculateDiff = function(value, onlyComparison = false
 				if(typeof diffValue !== 'string'){
 					isChanged = true;
 				}
-				!childrenForwardDiffs && (childrenForwardDiffs = []);
-				childrenForwardDiffs.push(diffValue);
+				const {forward, backward } = diffValue;
+				childrenForwardDiffs.push(forward);
+				childrenBackwardDiffs.push(backward);
+
 			}
 		}
 		else {// new child addition
 			if(onlyComparison){
 				childUpdateCount = childUpdateCount + 1;
 			} else {
-				!childrenForwardDiffs && (childrenForwardDiffs = []);
 				childrenForwardDiffs.push(currentStoreObject.asJson());
-
-				!childrenBackwardDiffs && (childrenBackwardDiffs = []);
 				childrenBackwardDiffs.push(currentStoreObject.asJson(undefined, true))
 			}
 
 		}
 	}
 
-	const deletedChildKeys = Object.keys(valueAsObj);
+	const deletedChildKeys = valueAsObj ? Object.keys(valueAsObj) : null;
 	const deletedChildCount = deletedChildKeys ? deletedChildKeys.length : 0;
 	if(deletedChildCount){
 		if(onlyComparison){
@@ -217,11 +216,7 @@ StoreCollection.prototype.calculateDiff = function(value, onlyComparison = false
 				deletedChildForwardDiff['displayName'] = undefined;
 				deletedChildForwardDiff['value'] = undefined;
 
-
-				!childrenForwardDiffs && (childrenForwardDiffs = []);
 				childrenForwardDiffs.push(deletedChildForwardDiff);
-
-				!childrenBackwardDiffs && (childrenBackwardDiffs = []);
 				childrenBackwardDiffs.push(deletedChild)
 			}
 		}
@@ -230,15 +225,15 @@ StoreCollection.prototype.calculateDiff = function(value, onlyComparison = false
 
 
 	if(isChanged){
-		return asforwardBackward ? {
+		return {
 			forward:this.asJson(childrenForwardDiffs),
-			backward:this.asJson(value)
-		} : this.asJson(childrenForwardDiffs)
+			backward:this.asJson(childrenBackwardDiffs)
+		};
 	} else {
-		return asforwardBackward ? {
+		return {
 			forward:this.id,
 			backward:this.id
-		} : this.id;
+		};
 	}
 };
 
