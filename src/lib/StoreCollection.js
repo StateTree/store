@@ -37,14 +37,18 @@ StoreCollection.prototype.setState = function(newValue, callback){
 					const newChildState = newValue[i];
 					if(newChildState){
 						let childId;
-						if(typeof newChildState === 'string'){
+						if(typeof newChildState === 'string'){ // no change
 							childId = newChildState; // id of UnchangedChild
 							childValues[childId] = this._value[childId];
 						} else {
 							const{id, classDefName, value, displayName} = newChildState;
-							childId = id; // id of changedChild
-							this.requestStore(childId, value, classDefName, displayName);
-							childValues[id] = value;
+							if(classDefName === undefined) { // delete Operation
+								this.remove(id);
+							}  else { // update Operation or Addition
+								this.requestStore(id, value, classDefName, displayName);
+								childValues[id] = value;
+							}
+
 						}
 						const idStillExist = (currentChildIds && currentChildIds.indexOf(childId) > -1)
 						if(idStillExist){ // remove them
@@ -53,12 +57,13 @@ StoreCollection.prototype.setState = function(newValue, callback){
 					}
 				}
 			}
-			if(currentChildIds){
+			// todo: will this line of Codes ever reach as we handle remove above
+			/*if(currentChildIds){
 				// remove all old Ids
 				currentChildIds.map((oldId)=>{
 					this.remove(oldId);
 				});
-			}
+			}*/
 			this._value = childValues;
 		};
 		//set state function is the one which triggers all the listeners attached to it
@@ -153,7 +158,9 @@ StoreCollection.prototype.removeAll = function(){
 	}
 };
 
-StoreCollection.prototype.calculateDiff = function(value, onlyComparison = false, asforwardBackward = false){
+// onlyComparison mode, our Diff is Log diff
+// in false mode our diff is state object
+StoreCollection.prototype.calculateDiff = function(value, onlyComparison = false){
 	const valueAsObj = arrayToObject(value, 'id');
 
 	const childrenKeys = Object.keys(this.children);
@@ -162,83 +169,83 @@ StoreCollection.prototype.calculateDiff = function(value, onlyComparison = false
 	let isChanged = stateLen !== currentStateLen ;
 	let childUpdateCount = 0;
 
-	let childrenForwardDiffs = undefined;
-	let childrenBackwardDiffs = undefined;
+	let childrenForwardDiffs = [];
+	let childrenBackwardDiffs = [];
 
 	for(let i = 0; i < currentStateLen; i++){
 		const key = childrenKeys[i];
 		const currentStoreObject = this.children[key];
 		const childState = valueAsObj ? valueAsObj[currentStoreObject.id]: undefined;
+		delete valueAsObj[currentStoreObject.id]; // need to do this to identify all deleted child
 
-		if(childState ){ // excisting child update
-			delete valueAsObj[currentStoreObject.id]; // need to do this to identify all deleted child
-			const childValue = childState ? childState.value : undefined;
+		if(childState  ){ // existing child update
+			if(typeof childState !== 'string'){ // no change this happens in diff mode , which onlyComparison
+				const childValue = childState ? childState.value : undefined;
+				if(onlyComparison){
+					const isChildUpdated = currentStoreObject.calculateDiff.call(currentStoreObject, childValue, onlyComparison);
+					if(isChildUpdated){
+						childUpdateCount = childUpdateCount + 1
+					}
+				}else{
+					const diffValue = currentStoreObject.getDiff.call(currentStoreObject, childValue);
+					if(typeof diffValue !== 'string'){
+						isChanged = true;
+					}
+					const {forward, backward } = diffValue;
+					childrenForwardDiffs.push(forward);
+					childrenBackwardDiffs.push(backward);
 
-			if(onlyComparison){
-				const isChildUpdated = currentStoreObject.calculateDiff.call(currentStoreObject, childValue, true);
-				if(isChildUpdated){
-					childUpdateCount = childUpdateCount + 1
 				}
-			}else{
-				const diffValue = currentStoreObject.getDiff.call(currentStoreObject, childValue);
-				if(typeof diffValue !== 'string'){
-					isChanged = true;
-				}
-				!childrenForwardDiffs && (childrenForwardDiffs = []);
-				childrenForwardDiffs.push(diffValue);
 			}
 		}
-		else {// new child addition
+		else {
 			if(onlyComparison){
 				childUpdateCount = childUpdateCount + 1;
 			} else {
-				!childrenForwardDiffs && (childrenForwardDiffs = []);
 				childrenForwardDiffs.push(currentStoreObject.asJson());
-
-				!childrenBackwardDiffs && (childrenBackwardDiffs = []);
 				childrenBackwardDiffs.push(currentStoreObject.asJson(undefined, true))
 			}
 
 		}
 	}
 
-	const deletedChildKeys = Object.keys(valueAsObj);
-	const deletedChildCount = deletedChildKeys ? deletedChildKeys.length : 0;
-	if(deletedChildCount){
+	const remainingChildKeys = valueAsObj ? Object.keys(valueAsObj) : null;
+	const remianingChildCount = remainingChildKeys ? remainingChildKeys.length : 0;
+	if(remianingChildCount){
 		if(onlyComparison){
-			return deletedChildCount + childUpdateCount;
+			childUpdateCount =  remianingChildCount + childUpdateCount;
 		} else {
-			for(let i = 0; i < deletedChildCount; i++){
-				const deletedChildKey = deletedChildKeys[i];
-				const deletedChild = valueAsObj[deletedChildKey];
+			for(let i = 0; i < remianingChildCount; i++){
+				const remainingChildKey = remainingChildKeys[i];
+				const remainingChild = valueAsObj[remainingChildKey];
 				const deletedChildForwardDiff = {};
-				deletedChildForwardDiff.id = deletedChild.id;
+				deletedChildForwardDiff.id = remainingChild.id;
 				deletedChildForwardDiff['classDefName'] = undefined;
 				deletedChildForwardDiff['displayName'] = undefined;
 				deletedChildForwardDiff['value'] = undefined;
 
-
-				!childrenForwardDiffs && (childrenForwardDiffs = []);
 				childrenForwardDiffs.push(deletedChildForwardDiff);
-
-				!childrenBackwardDiffs && (childrenBackwardDiffs = []);
-				childrenBackwardDiffs.push(deletedChild)
+				childrenBackwardDiffs.push(remainingChild)
 			}
 		}
 
 	}
 
+	if(onlyComparison){
+		return childUpdateCount;
+	}
+
 
 	if(isChanged){
-		return asforwardBackward ? {
+		return {
 			forward:this.asJson(childrenForwardDiffs),
-			backward:this.asJson(value)
-		} : this.asJson(childrenForwardDiffs)
+			backward:this.asJson(childrenBackwardDiffs)
+		};
 	} else {
-		return asforwardBackward ? {
+		return {
 			forward:this.id,
 			backward:this.id
-		} : this.id;
+		};
 	}
 };
 
