@@ -34,8 +34,11 @@ export default class Store extends StoreID{
 		this.asJson = this.asJson.bind(this);
 	}
 
-	asJson(value, isDelete){
+	asJson(value, isDelete, onlyValue){
 		value = value === undefined ? this.getState() : value;
+		if(onlyValue){
+			return value;
+		}
 		const json = super.asJson();
 		json['classDefName'] = isDelete ?  undefined : this.constructor.name;
 		json['displayName'] = isDelete ?  undefined :this.displayName;
