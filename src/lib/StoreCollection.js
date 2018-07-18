@@ -22,8 +22,8 @@ export default class StoreCollection extends Store{
 
 }
 
-StoreCollection.prototype.getState = function(){
-	return this.getChildren(true);
+StoreCollection.prototype.getState = function(onlyValue){
+	return this.getChildren(true, onlyValue);
 };
 
 StoreCollection.prototype.setState = function(newValue, callback){
@@ -83,13 +83,13 @@ StoreCollection.prototype.getChildIds = function(asCopy){
 	return asCopy ? ids.slice() : ids;
 };
 
-StoreCollection.prototype.getChildren = function(asJson){
+StoreCollection.prototype.getChildren = function(asJson, onlyValue){
 	const children = [];
 	const childKeys = Object.keys(this.children);
 	for(let i = 0; i < childKeys.length; i++){
 		const childKey = childKeys[i];
 		const storeObject = this.children[childKey];
-		children.push(asJson?storeObject.asJson():storeObject);
+		children.push(asJson ? storeObject.asJson(undefined, undefined, onlyValue):storeObject);
 	}
 	return children;
 };
