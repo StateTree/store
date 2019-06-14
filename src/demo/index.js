@@ -3,11 +3,11 @@ import {StoreCollection} from './../lib';
 
 const store = new Store(5,' Number');
 
-store.addListener(window, ()=>{
+store.addFunction(()=>{
 	console.log("Immediate");
 });
 
-store.addListener(window, ()=>{
+store.addFunction(()=>{
 	console.log("Later");
 }, true);
 

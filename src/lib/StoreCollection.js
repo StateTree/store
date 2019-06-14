@@ -69,7 +69,7 @@ StoreCollection.prototype.setState = function(newValue, callback){
 		//set state function is the one which triggers all the listeners attached to it
 		// if listeners execution are going on, this will execute once they are done
 		// else set state is executed immediately
-		this.executeTriggerer(this,_setState, ()=>{
+		this.executeWhenIdle(_setState, ()=>{
 			callback && callback();
 		});
 	}
@@ -110,16 +110,16 @@ StoreCollection.prototype.requestStore = function(id, state, classDefName, displ
 			storeObject = new StoreCollection(state, displayName, id);
 		}
 
-		storeObject.setConnector(this.triggerListeners.bind(this));
+		storeObject.setConnector(this.trigger.bind(this));
 		storeObject.linkParentId(this.id);
 		const newStoreObjId = storeObject.id;
 		this.children[newStoreObjId] = storeObject;
 		this._value[newStoreObjId] = storeObject.getValue();
 		returnValue = storeObject;
-		this.triggerListeners();
+		this.trigger();
 	};
 
-	this.executeTriggerer(this,_requestStore, ()=>{
+	this.executeWhenIdle(_requestStore, ()=>{
 		newStoreCallback && newStoreCallback(returnValue);
 	});
 };
@@ -131,14 +131,14 @@ StoreCollection.prototype.remove = function(id,trigger = true){
 			storeObject.removeConnector();
 			delete this.children[id];
 			delete this._value[id];
-			trigger && this.triggerListeners();
+			trigger && this.trigger();
 		}
 
 		if(!trigger){
 			_remove.call(this);
 		};
 
-		this.executeTriggerer(this,_remove)
+		this.executeWhenIdle(_remove)
 	}
 
 };
@@ -151,10 +151,10 @@ StoreCollection.prototype.removeAll = function(){
 				const childKey = childKeys[i];
 				this.remove(childKey, false);
 			}
-			this.triggerListeners();
+			this.trigger();
 		}
 
-		this.executeTriggerer(this,_removeAll)
+		this.executeWhenIdle(_removeAll)
 	}
 };
 

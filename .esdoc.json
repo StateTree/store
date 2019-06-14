@@ -1,0 +1,27 @@
+{
+  "source": "./src/lib",
+  "destination": "./build/docs",
+  "index": "./README.md",
+  "package": "./package.json",
+  "plugins": [
+    {
+      "name": "esdoc-standard-plugin",
+      "option": {
+        "test": {
+          "source": "./test/",
+          "interfaces": ["describe", "it", "context", "suite", "test"],
+          "includes": ["(spec|Spec|test|Test)\\.js$"],
+          "excludes": ["\\.config\\.js$"]
+        },
+        "manual": {
+          "index": "./build/manual/index.md",
+          "files": [
+            "./build/manual/installation.md",
+            "./build/manual/overview.md",
+            "./build/manual/tutorial.md"
+          ]
+        }
+      }
+    }
+  ]
+}
