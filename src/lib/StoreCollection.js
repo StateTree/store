@@ -2,8 +2,9 @@ import Store from './Store';
 import {arrayToObject, combineArray} from './helpers';
 
 export default class StoreCollection extends Store{
-	constructor(state,displayName, objectName){
-		super(null, displayName, objectName);
+	constructor(state,displayName, objectName, classDefName){
+		classDefName = classDefName ? classDefName : 'StoreCollection';
+		super(null, displayName, objectName, null, classDefName);
 		this.children = {};
 		this._value = state ? (state.value === undefined ? {} : state.value) : {};
 		this.triggerWaitCount = 0;
@@ -105,9 +106,9 @@ StoreCollection.prototype.requestStore = function(id, state, classDefName, displ
 	let returnValue;
 	const _requestStore = ()=>{
 		if(classDefName === 'Store'){
-			storeObject = new Store(state, displayName, id);
+			storeObject = new Store(state, displayName, id, null, classDefName);
 		} else if(classDefName === 'StoreCollection') {
-			storeObject = new StoreCollection(state, displayName, id);
+			storeObject = new StoreCollection(state, displayName, id, classDefName);
 		}
 
 		storeObject.setConnector(this.trigger.bind(this));

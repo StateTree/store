@@ -24,11 +24,12 @@ function calculateDiff(value, onlyComparison = false){
 * 4. setState set the value if there is a change to oldValue and inAddition triggers all dataChange listeners
 * 5. getDiff return the value in JSON Strucuture with metadata Information about this object*/
 export default class Store extends StoreID{
-	constructor(value, displayName, objectName, comparer){
+	constructor(value, displayName, objectName, comparer, classDefName){
 		super(objectName);
 		//initial value can't be undefined, it has to be null or given value
 		this._value = value === undefined ? null : value;
 		this.displayName = displayName;
+		this.classDefName = classDefName ? classDefName : 'Store';
 		this.comparer = comparer;
 
 		this.asJson = this.asJson.bind(this);
@@ -40,7 +41,7 @@ export default class Store extends StoreID{
 			return value;
 		}
 		const json = super.asJson();
-		json['classDefName'] = isDelete ?  undefined : this.constructor.name;
+		json['classDefName'] = isDelete ?  undefined : this.classDefName;
 		json['displayName'] = isDelete ?  undefined :this.displayName;
 		json['value'] = isDelete ?  undefined :value;
 		return json;
