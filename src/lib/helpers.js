@@ -1,4 +1,4 @@
-import { compare} from 'diff';
+import { compare} from '@statetree/diff';
 
 
 export function isChanged(oldVal, newVal){

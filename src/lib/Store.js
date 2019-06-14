@@ -62,12 +62,12 @@ Store.prototype.setState = function(newValue, callback){
 	if(didStateChanged){
 		const _setState = ()=>{
 			this._value = newValue;
-			this.triggerListeners();
+			this.trigger();
 		};
 		//set state function is the one which triggers all the listeners attached to it
 		// if listeners execution are going on, this will execute once they are done
 		// else set state is executed immediately
-		this.executeTriggerer(this,_setState, ()=>{
+		this.executeWhenIdle(_setState, ()=>{
 			Store.stackDebug && console.log("Store: _setStateCallback: " , this);
 			callback && callback();
 		});

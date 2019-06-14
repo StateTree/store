@@ -1,4 +1,4 @@
-import Functions from 'functions';
+import Functions from '@statetree/functions';
 
 export default class StoreID extends Functions{
 	constructor(id){
