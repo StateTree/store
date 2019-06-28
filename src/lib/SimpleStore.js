@@ -1,6 +1,13 @@
 import StoreID from './StoreID';
+import {isChanged} from "./helpers";
 
-
+function didChange(currentValue, value, compareFn){
+  if(compareFn){
+    return compareFn(value, currentValue);
+  }else{
+    return isChanged(value, currentValue);
+  }
+}
 
 /*
 * 1. getValue, return the wrapped value inside this object
@@ -41,8 +48,8 @@ SimpleStore.prototype.getState = function(){
   return this._value;
 };
 
-SimpleStore.prototype.setState = function(newValue, callback){
-  const didStateChanged = this.calculateDiff(newValue, true);
+SimpleStore.prototype.setState = function(newValue, callback, stateChanged){
+  const didStateChanged = stateChanged === undefined ? didChange(this._value, newValue, this.comparer) : stateChanged;
 
   if(didStateChanged){
     const _setState = ()=>{
@@ -67,7 +74,7 @@ SimpleStore.prototype.shouldListenersExecute = function(oldValue, newValue){
 
 SimpleStore.prototype.applyDiff = function(stateAsJson, callback){
   if(typeof stateAsJson !== 'string'){
-    this.setState(stateAsJson.value, callback);
+    this.setState(stateAsJson.value, callback, true);
   }
 };
 

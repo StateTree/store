@@ -1,3 +1,4 @@
+import {getDiffCount} from '@statetree/diff';
 import SimpleStore from './SimpleStore';
 
 export default class StoreObject extends SimpleStore{
@@ -26,8 +27,8 @@ StoreObject.prototype.getState = function(onlyValue){
 	return this.getChildren(true, onlyValue);
 };
 
-StoreObject.prototype.setState = function(newValue, callback){
-	this.triggerWaitCount = this.calculateDiff(newValue, true);
+StoreObject.prototype.setState = function(newValue, callback, diffCount){
+	this.triggerWaitCount = (diffCount === undefined) ? getDiffCount(this.children,newValue): diffCount;
 	if(this.triggerWaitCount > 0){
 		const _setState = ()=>{
 			let childValues = {};
@@ -157,13 +158,11 @@ StoreObject.prototype.removeAll = function(){
 };
 
 
-
-
 // when we call apply diff, connect to next set of functions are not called
-StoreObject.prototype.applyDiff = function(value, callback){
+StoreObject.prototype.applyDiff = function(value, callback, diffCount){
 	this.unLinkConnector();
-	this.setState(value, ()=>{
+	this.setState(value,()=>{
 		this.linkConnector();
 		callback()
-	});
+	}, diffCount);
 };

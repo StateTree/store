@@ -1,21 +1,5 @@
-import { isChanged} from './helpers';
+import {isChanged} from './helpers';
 import StoreID from './StoreID';
-
-function calculateDiff(value, onlyComparison = false){
-	const currentValue = this._value;
-	let changed = false;
-	if(this.comparer){
-		changed = this.comparer(value, currentValue);
-	}else{
-		changed = isChanged(value, currentValue);
-	}
-	Store.stackDebug && console.log("Store: getDiff: ", value, currentValue , this);
-	if(onlyComparison){
-		return changed;
-	}
-
-	return changed ? this.asJson(currentValue) : this.id;
-}
 
 
 /*

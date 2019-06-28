@@ -61,7 +61,7 @@
     "LICENSE"
   ],
   "dependencies": {
-    "@statetree/diff": "^3.0.2",
+    "@statetree/diff": "git+http://github.com/StateTree/diff.git#develop",
     "@statetree/functions": "^6.0.1"
   }
 }
