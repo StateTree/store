@@ -105,8 +105,8 @@ StoreObject.prototype.requestStore = function(id, state, classDefName, displayNa
 
 	let returnValue;
 	const _requestStore = ()=>{
-		if(classDefName === 'Store'){
-			storeObject = new Store(state, displayName, id, null, classDefName);
+		if(classDefName === 'SimpleStore'){
+			storeObject = new SimpleStore(state, displayName, id, null, classDefName);
 		} else if(classDefName === 'StoreObject') {
 			storeObject = new StoreObject(state, displayName, id, classDefName);
 		}
