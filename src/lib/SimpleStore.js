@@ -26,15 +26,11 @@ export default class SimpleStore extends StoreID{
     this.asJson = this.asJson.bind(this);
   }
 
-  asJson(value, isDelete, onlyValue){
-    value = value === undefined ? this.getState() : value;
-    if(onlyValue){
-      return value;
-    }
+  asJson(){
     const json = super.asJson();
-    json['classDefName'] = isDelete ?  undefined : this.classDefName;
-    json['displayName'] = isDelete ?  undefined :this.displayName;
-    json['value'] = isDelete ?  undefined :value;
+    json['classDefName'] =  this.classDefName;
+    json['displayName'] = this.displayName;
+    json['value'] = this.getState();
     return json;
   };
 }
@@ -44,12 +40,14 @@ SimpleStore.prototype.getValue = function(){
   return this._value;
 };
 
+
 SimpleStore.prototype.getState = function(){
-  return this._value;
+  return this.asJson();
 };
 
-SimpleStore.prototype.setState = function(newValue, callback, stateChanged){
-  const didStateChanged = stateChanged === undefined ? didChange(this._value, newValue, this.comparer) : stateChanged;
+SimpleStore.prototype.setState = function(stateAsJson, callback){
+  const newValue = stateAsJson.value;
+  const didStateChanged = didChange(this._value, newValue, this.comparer);
 
   if(didStateChanged){
     const _setState = ()=>{
@@ -59,10 +57,7 @@ SimpleStore.prototype.setState = function(newValue, callback, stateChanged){
     //set state function is the one which triggers all the listeners attached to it
     // if listeners execution are going on, this will execute once they are done
     // else set state is executed immediately
-    this.executeWhenIdle(_setState, ()=>{
-      SimpleStore.stackDebug && console.log("SimpleStore: _setStateCallback: " , this);
-      callback && callback();
-    });
+    this.executeWhenIdle(_setState, callback);
   }
 
   return Number(didStateChanged);
@@ -73,9 +68,7 @@ SimpleStore.prototype.shouldListenersExecute = function(oldValue, newValue){
 };
 
 SimpleStore.prototype.applyDiff = function(stateAsJson, callback){
-  if(typeof stateAsJson !== 'string'){
-    this.setState(stateAsJson.value, callback, true);
-  }
+  this.setState(stateAsJson, callback);
 };
 
 
