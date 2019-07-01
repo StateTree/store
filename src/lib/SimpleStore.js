@@ -30,7 +30,7 @@ export default class SimpleStore extends StoreID{
     const json = super.asJson();
     json['classDefName'] =  this.classDefName;
     json['displayName'] = this.displayName;
-    json['value'] = this.getState();
+    json['value'] = this.getValue();
     return json;
   };
 }
