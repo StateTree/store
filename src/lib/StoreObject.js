@@ -85,12 +85,12 @@ StoreObject.prototype.getChildIds = function(asCopy){
 };
 
 StoreObject.prototype.getChildren = function(asJson, onlyValue){
-	const children = [];
+	const children = {};
 	const childKeys = Object.keys(this.children);
 	for(let i = 0; i < childKeys.length; i++){
 		const childKey = childKeys[i];
 		const storeObject = this.children[childKey];
-		children.push(asJson ? storeObject.asJson(undefined, undefined, onlyValue):storeObject);
+		children[childKey] = (asJson ? storeObject.asJson(undefined, undefined, onlyValue):storeObject);
 	}
 	return children;
 };
