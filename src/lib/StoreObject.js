@@ -1,4 +1,3 @@
-import {getDiffCount} from '@statetree/diff';
 import SimpleStore from './SimpleStore';
 
 export default class StoreObject extends SimpleStore{
@@ -29,35 +28,39 @@ StoreObject.prototype.getState = function(){
 };
 
 StoreObject.prototype.setState = function(stateAsJson, callback, diffCount){
-	const newValue = stateAsJson.value;
-	this.triggerWaitCount = (diffCount === undefined) ? getDiffCount(this.getState(), newValue): diffCount;
-	if(this.triggerWaitCount > 0){
-		const _setState = ()=>{
-			if(newValue){
-				const newKeys = Object.keys(newValue);
-				for (let i = 0; i < newKeys.length; i++) {
-					const newKey = newKeys[i];
-					const newChildState = newValue[newKey];
-					if (newChildState){
-						if(newChildState === 'delete'){
-							this.remove(newKey);
-						} else {
-							const {id, classDefName, value, displayName} = newChildState;
-							this.requestStore(id, value, classDefName, displayName);
-						}
-					}
+
+	const _setState = ()=>{
+		let changeCount = 0;
+		const newValue = stateAsJson.value;
+		const newKeys = Object.keys(newValue);
+		for (let i = 0; i < newKeys.length; i++) {
+			const newKey = newKeys[i];
+			const newChildState = newValue[newKey];
+
+			if (newChildState){
+				if(newChildState === 'delete') { // deletion
+					this.remove(newKey);
+					changeCount = changeCount + 1;
+				} else if (this.children[newKey]){ // update
+					const existingStoreObj = this.children[newKey];
+					changeCount = changeCount + existingStoreObj.setState(newChildState);
+				} else { // addition
+					changeCount = changeCount + 1;
+					const {id, classDefName, value, displayName} = newChildState;
+					this.requestStore(id, value, classDefName, displayName);
 				}
 			}
-		};
-		//set state function is the one which triggers all the listeners attached to it
-		// if listeners execution are going on, this will execute once they are done
-		// else set state is executed immediately
-		this.executeWhenIdle(_setState, ()=>{
-			callback && callback();
-		});
-	}
+		}
+		return changeCount
+	};
 
-	return Number(this.triggerWaitCount > 0);
+	//set state function is the one which triggers all the listeners attached to it
+	// if listeners execution are going on, this will execute once they are done
+	// else set state is executed immediately
+	this.executeAsyncWhenIdle(_setState).onDone((count)=>{
+		this.triggerWaitCount = count;
+		callback && callback();
+	});
 };
 
 
@@ -83,7 +86,7 @@ StoreObject.prototype.requestStore = function(id, state, classDefName, displayNa
 			displayName: displayName,
 			objectName: id
 		});
-		return storeObject
+		return storeObject;
 	}
 
 	const _requestStore = ()=>{
